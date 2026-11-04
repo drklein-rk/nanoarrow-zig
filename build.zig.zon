@@ -16,6 +16,6 @@
         },
     },
     .minimum_zig_version = "0.17.0",
-    .paths = .{ "build.zig", "build.zig.zon", "README.md", "LICENSE" },
+    .paths = .{ "build.zig", "build.zig.zon", "README.md", "LICENSE", "examples" },
     .fingerprint = 0xabf3c7f7f8274052,
 }

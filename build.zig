@@ -73,6 +73,17 @@ pub fn build(b: *std.Build) void {
     });
     nanoarrow_mod.linkLibrary(nanoarrow_lib);
 
+    const smoke_test = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("examples/basic.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "nanoarrow", .module = nanoarrow_mod }},
+        }),
+    });
+    const test_step = b.step("test", "Run the Zig smoke test (examples/basic.zig)");
+    test_step.dependOn(&b.addRunArtifact(smoke_test).step);
+
     if (device_ext) {
         const nanoarrow_device = b.addLibrary(.{
             .name = "nanoarrow_device",

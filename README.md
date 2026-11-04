@@ -25,6 +25,12 @@ Other options: `-Dlinkage=static|dynamic` (default `static`), `-Dnamespace=<Name
 Not covered yet: Metal/CUDA device backends, the nanoarrow testing extension and the upstream
 C++ test suite.
 
+## Test
+
+```sh
+zig build test    # runs examples/basic.zig against the built library
+```
+
 ## Build
 
 ```sh
@@ -63,7 +69,13 @@ pub fn main() !void {
 }
 ```
 
-The module links `libnanoarrow` automatically.
+The module links `libnanoarrow` automatically. See [`examples/basic.zig`](examples/basic.zig) for
+building and reading arrays.
+
+**Known limitation:** Zig's translate-c cannot translate some of nanoarrow's inline helpers
+(e.g. `ArrowCharView`, `ArrowArrayAppendString`), so those fail to compile from Zig. The rest of
+the API (schemas, numeric arrays, array views, ...) works. For the full API, use the C route below
+from a C source file.
 
 ### From C / C++
 

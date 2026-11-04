@@ -1,0 +1,21 @@
+.{
+    .name = .nanoarrow_zig,
+    .version = "0.0.1",
+    .dependencies = .{
+        .upstream = .{
+            .url = "https://github.com/apache/arrow-nanoarrow/releases/download/apache-arrow-nanoarrow-0.9.0/apache-arrow-nanoarrow-0.9.0.tar.gz",
+            .hash = "N-V-__8AAFJGjQDdZ-YxRe6QxscL234tcAjhWstwErQVToB4",
+        },
+        .zstd = .{
+            .url = "git+https://github.com/allyourcodebase/zstd.git?ref=1.5.7-2#4ccb01e6fceae86fb9fe36c60b8a103cdc058155",
+            .hash = "zstd-1.5.7-2-KEItkAMwAADNhCbGaImKrjXjnSA51jcqEbGCA3RasVZ9",
+        },
+        .lz4 = .{
+            .url = "git+https://github.com/allyourcodebase/lz4.git?ref=1.10.0-6#41f52ab227caf9d48cf88c89a4d2946caa12b102",
+            .hash = "lz4-1.10.0-6-ewyzw-4NAAAWDpY4xpiqr4LQhZQAC0x_rGnW2iPh6jk2",
+        },
+    },
+    .minimum_zig_version = "0.17.0",
+    .paths = .{ "build.zig", "build.zig.zon", "README.md", "LICENSE" },
+    .fingerprint = 0xabf3c7f7f8274052,
+}

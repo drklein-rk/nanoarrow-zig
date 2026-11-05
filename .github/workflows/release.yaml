@@ -49,4 +49,4 @@ jobs:
           git push origin "$tag"
           gh release create "$tag" --verify-tag \
             --title "nanoarrow-zig $version (nanoarrow ${version%-*})" \
-            --notes "Zig build of Apache Arrow nanoarrow ${version%-*}. Zig 0.17.0+."
+            --notes "Zig build of nanoarrow ${version%-*}. Zig 0.17.0+."

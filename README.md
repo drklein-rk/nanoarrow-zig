@@ -1,6 +1,6 @@
 # nanoarrow-zig
 
-[Apache Arrow nanoarrow](https://github.com/apache/arrow-nanoarrow) built with the
+[nanoarrow](https://github.com/apache/arrow-nanoarrow) built with the
 [Zig build system](https://ziglang.org/learn/build-system/), packaged so it can be used as a
 dependency from Zig **and** C projects. No CMake required.
 

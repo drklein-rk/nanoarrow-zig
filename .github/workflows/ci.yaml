@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: "0.17.0"
+
+      - name: Check formatting
+        run: zig fmt --ast-check --check .
+
+  # Native build + smoke test on every common OS/arch runner.
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest # linux x86_64
+          - ubuntu-24.04-arm # linux arm64
+          - macos-15-intel # macos x86_64
+          - macos-latest # macos arm64
+          - windows-latest # windows x86_64
+          - windows-11-arm # windows arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: "0.17.0"
+
+      - name: Build all components
+        run: zig build -Dipc -Ddevice -Dapps
+
+      - name: Smoke test
+        run: zig build test --summary all
+
+  # Cross-compile every target from a single runner.
+  cross:
+    name: cross (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-linux-gnu
+          - aarch64-linux-gnu
+          - x86_64-linux-musl
+          - aarch64-linux-musl
+          - x86_64-macos
+          - aarch64-macos
+          - x86_64-windows
+          - aarch64-windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: "0.17.0"
+
+      - name: Build all components
+        run: zig build -Dtarget=${{ matrix.target }} -Dipc -Ddevice -Dapps -Doptimize=ReleaseSafe

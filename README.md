@@ -1,11 +1,21 @@
 # nanoarrow-zig
 
-[Apache Arrow nanoarrow](https://github.com/apache/arrow-nanoarrow) (v0.9.0) built with the
+[Apache Arrow nanoarrow](https://github.com/apache/arrow-nanoarrow) built with the
 [Zig build system](https://ziglang.org/learn/build-system/), packaged so it can be used as a
 dependency from Zig **and** C projects. No CMake required.
 
-This repository contains only the build logic. The nanoarrow sources are fetched from the
-upstream release tarball (see `build.zig.zon`).
+This repository contains only the build logic. The nanoarrow sources are fetched from upstream
+(see `build.zig.zon`).
+
+## Branches and versions
+
+| Branch | nanoarrow source | Use |
+|--------|------------------|-----|
+| `main` | latest upstream commit (snapshot), bumped daily by a workflow | development / bleeding edge |
+| `0.9.x`, `0.10.x`, ... | the matching nanoarrow release tarball | releases |
+
+Releases are tagged `v<nanoarrow version>-<revision>` on the matching branch: `v0.9.0-0` packages
+nanoarrow 0.9.0, and `v0.9.0-1` would be a build-only update of the same nanoarrow release.
 
 Requires **Zig 0.17.0 or newer**.
 
@@ -45,7 +55,8 @@ Libraries and headers (including the generated `nanoarrow/nanoarrow_config.h`) a
 ## Use as a dependency
 
 ```sh
-zig fetch --save git+https://github.com/drklein-rk/nanoarrow-zig
+zig fetch --save https://github.com/drklein-rk/nanoarrow-zig/archive/refs/tags/v0.9.0-0.tar.gz  # release
+zig fetch --save git+https://github.com/drklein-rk/nanoarrow-zig                                  # latest snapshot
 ```
 
 ### From Zig

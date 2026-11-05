@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
     const apps = b.option(bool, "apps", "Build apps (dump_stream)") orelse false;
     const upstream = b.dependency("upstream", .{});
 
-    const nanoarrow_version: std.SemanticVersion = .{ .major = 0, .minor = 9, .patch = 0 };
+    const nanoarrow_version = nanoarrowVersion();
     const nanoarrow_config_h = b.addConfigHeader(.{
         .style = .{ .cmake = upstream.path("src/nanoarrow/nanoarrow_config.h.in") },
         .include_path = "nanoarrow/nanoarrow_config.h",
@@ -225,3 +225,15 @@ const FLATCC_LIB_FILES = .{
     "runtime/refmap.c",
     "runtime/verifier.c",
 };
+
+/// Derives the packaged nanoarrow version from this package's own `.version` in build.zig.zon.
+/// "X.Y.Z-N" (numeric suffix) is our revision of nanoarrow X.Y.Z; any other pre-release tag,
+/// e.g. "0.10.0-SNAPSHOT", is nanoarrow's own and is kept as is.
+fn nanoarrowVersion() std.SemanticVersion {
+    var v = std.SemanticVersion.parse(@import("build.zig.zon").version) catch @panic("invalid .version in build.zig.zon");
+    if (v.pre) |pre| {
+        if (std.mem.findNone(u8, pre, "0123456789") == null) v.pre = null;
+    }
+    v.build = null;
+    return v;
+}

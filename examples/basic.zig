@@ -6,8 +6,8 @@ fn check(code: na.ArrowErrorCode) !void {
     if (code != na.NANOARROW_OK) return error.NanoarrowError;
 }
 
-test "library version matches the packaged release" {
-    try std.testing.expectEqualStrings("0.9.0", std.mem.span(na.ArrowNanoarrowVersion()));
+test "library and header versions agree" {
+    try std.testing.expectEqualStrings(na.NANOARROW_VERSION, std.mem.span(na.ArrowNanoarrowVersion()));
 }
 
 test "build an int32 array with a null and read it back" {

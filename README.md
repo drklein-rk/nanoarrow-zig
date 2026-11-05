@@ -45,8 +45,12 @@ Libraries and headers (including the generated `nanoarrow/nanoarrow_config.h`) a
 ## Use as a dependency
 
 ```sh
-zig fetch --save git+https://github.com/drklein-rk/nanoarrow-zig
+zig fetch --save https://github.com/drklein-rk/nanoarrow-zig/archive/refs/tags/v0.9.0-0.tar.gz
 ```
+
+Versions are `<nanoarrow version>-<revision>`: `v0.9.0-0` packages nanoarrow 0.9.0, and a later
+`v0.9.0-1` would be a build-only update of the same nanoarrow release. This branch (`0.9.x`) is
+pinned to the nanoarrow 0.9.0 release tarball.
 
 ### From Zig
 

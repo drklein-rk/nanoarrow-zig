@@ -1,0 +1,52 @@
+name: Release
+
+# Tags the head of a release branch as v<.version> (e.g. v0.9.0-0) and publishes a GitHub release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Release branch to publish (e.g. 0.9.x)
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Tag and publish
+        env:
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          case "$BRANCH" in
+            [0-9]*.[0-9]*.x) ;;
+            *) echo "::error::$BRANCH is not a release branch"; exit 1 ;;
+          esac
+
+          version=$(sed -n 's/^    \.version = "\(.*\)",$/\1/p' build.zig.zon)
+          case "$version" in
+            "${BRANCH%.x}".*-[0-9]*) ;;
+            *) echo "::error::version '$version' does not belong to $BRANCH"; exit 1 ;;
+          esac
+          tag="v$version"
+          if git ls-remote --exit-code --tags origin "$tag" > /dev/null; then
+            echo "::error::$tag already exists; bump the revision first"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "nanoarrow-zig $version"
+          git push origin "$tag"
+          gh release create "$tag" --verify-tag \
+            --title "nanoarrow-zig $version (nanoarrow ${version%-*})" \
+            --notes "Zig build of Apache Arrow nanoarrow ${version%-*}. Zig 0.17.0+."

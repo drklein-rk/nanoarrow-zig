@@ -1,0 +1,113 @@
+name: Detect nanoarrow release
+
+# Looks for a new apache/arrow-nanoarrow release line. If there is no `X.Y.x` branch for it yet, creates
+# one from main, pinned to the release tarball and versioned `X.Y.Z-0`, runs the full CI on it and opens
+# an issue with the result. Publishing is done by hand with the "Release" workflow.
+
+on:
+  schedule:
+    - cron: "40 3 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Upstream release to use instead of the latest one (e.g. 0.9.0)
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  UPSTREAM: apache/arrow-nanoarrow
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      created: ${{ steps.detect.outputs.created }}
+      branch: ${{ steps.detect.outputs.branch }}
+      version: ${{ steps.detect.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: "0.17.0"
+
+      - name: Detect release and create branch
+        id: detect
+        env:
+          VERSION_OVERRIDE: ${{ inputs.version }}
+        run: |
+          echo "created=false" >> "$GITHUB_OUTPUT"
+          if [ -n "$VERSION_OVERRIDE" ]; then
+            version="$VERSION_OVERRIDE"
+          else
+            tag=$(gh api "repos/$UPSTREAM/releases/latest" --jq .tag_name)
+            version="${tag#apache-arrow-nanoarrow-}"
+          fi
+          if ! echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::unexpected upstream release version '$version'"
+            exit 1
+          fi
+          branch="${version%.*}.x"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "Branch $branch already exists"
+            git fetch -q origin "$branch"
+            pinned=$(git show FETCH_HEAD:build.zig.zon)
+            if ! echo "$pinned" | grep -q "apache-arrow-nanoarrow-$version.tar.gz"; then
+              title="nanoarrow $version released: update branch $branch"
+              if [ -z "$(gh issue list --state all --search "\"$title\" in:title" --json number --jq '.[0].number')" ]; then
+                gh issue create --title "$title" \
+                  --body "Branch \`$branch\` is not pinned to nanoarrow $version yet. Update its upstream pin and bump the revision to \`$version-0\`."
+              fi
+            fi
+            exit 0
+          fi
+
+          url="https://github.com/$UPSTREAM/releases/download/apache-arrow-nanoarrow-$version/apache-arrow-nanoarrow-$version.tar.gz"
+          zig fetch --save=upstream "$url"
+          sed -i "s/^    \.version = \".*\",/    .version = \"$version-0\",/" build.zig.zon
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -am "Pin nanoarrow $version release ($version-0)"
+          git push origin "$branch"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+  ci:
+    needs: prepare
+    if: needs.prepare.outputs.created == 'true'
+    uses: ./.github/workflows/ci.yaml
+    with:
+      ref: ${{ needs.prepare.outputs.branch }}
+
+  report:
+    needs: [prepare, ci]
+    if: always() && needs.prepare.outputs.created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open issue
+        env:
+          BRANCH: ${{ needs.prepare.outputs.branch }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          CI_RESULT: ${{ needs.ci.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$CI_RESULT" = "success" ]; then
+            next="Run the **Release** workflow on branch \`$BRANCH\` to tag and publish v$VERSION-0."
+          else
+            next="CI failed, so the branch needs fixing on \`main\` first (then recreate or cherry-pick). Details: $RUN_URL"
+          fi
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "nanoarrow $VERSION released: branch $BRANCH created (CI: $CI_RESULT)" \
+            --body "Created branch \`$BRANCH\` pinned to the nanoarrow $VERSION release tarball. $next"

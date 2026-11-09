@@ -17,6 +17,8 @@ permissions:
 
 jobs:
   fmt:
+    # sync PRs are verified by sync-upstream.yaml via workflow_call
+    if: github.head_ref != 'sync/upstream'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +35,8 @@ jobs:
 
   # Native build + smoke test on every common OS/arch runner.
   test:
+    # sync PRs are verified by sync-upstream.yaml via workflow_call
+    if: github.head_ref != 'sync/upstream'
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -63,6 +67,8 @@ jobs:
 
   # Cross-compile every target from a single runner.
   cross:
+    # sync PRs are verified by sync-upstream.yaml via workflow_call
+    if: github.head_ref != 'sync/upstream'
     name: cross (${{ matrix.target }})
     runs-on: ubuntu-latest
     strategy:

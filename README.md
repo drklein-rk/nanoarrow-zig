@@ -38,7 +38,8 @@ C++ test suite.
 ## Test
 
 ```sh
-zig build test    # runs examples/basic.zig against the built library
+zig build test        # runs examples/basic.zig against the built library
+zig build test -Dipc  # additionally runs examples/ipc.zig (IPC round trip)
 ```
 
 ## Build
@@ -82,6 +83,10 @@ pub fn main() !void {
 
 The module links `libnanoarrow` automatically. See [`examples/basic.zig`](examples/basic.zig) for
 building and reading arrays.
+
+With `-Dipc`, the `nanoarrow_ipc` module is also available. It exposes the IPC API on top of the
+core API (use it instead of `nanoarrow`, not alongside it). See
+[`examples/ipc.zig`](examples/ipc.zig) for writing and reading an IPC stream.
 
 **Known limitation:** Zig's translate-c cannot translate some of nanoarrow's inline helpers
 (e.g. `ArrowCharView`, `ArrowArrayAppendString`), so those fail to compile from Zig. The rest of

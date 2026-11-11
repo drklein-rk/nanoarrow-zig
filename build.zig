@@ -178,6 +178,33 @@ pub fn build(b: *std.Build) void {
 
         if (ipc_ext or apps) b.installArtifact(nanoarrow_ipc);
 
+        if (ipc_ext) {
+            // nanoarrow_ipc.h includes nanoarrow.h, so this module also exposes the core API.
+            const translate_ipc = b.addTranslateC(.{
+                .root_source_file = upstream.path("src/nanoarrow/nanoarrow_ipc.h"),
+                .target = target,
+                .optimize = optimize,
+            });
+            translate_ipc.addIncludePath(upstream.path("src"));
+            translate_ipc.addConfigHeader(nanoarrow_config_h);
+            const nanoarrow_ipc_mod = b.addModule("nanoarrow_ipc", .{
+                .root_source_file = translate_ipc.getOutput(),
+                .target = target,
+                .optimize = optimize,
+            });
+            nanoarrow_ipc_mod.linkLibrary(nanoarrow_ipc);
+
+            const ipc_example = b.addTest(.{
+                .root_module = b.createModule(.{
+                    .root_source_file = b.path("examples/ipc.zig"),
+                    .target = target,
+                    .optimize = optimize,
+                    .imports = &.{.{ .name = "nanoarrow_ipc", .module = nanoarrow_ipc_mod }},
+                }),
+            });
+            test_step.dependOn(&b.addRunArtifact(ipc_example).step);
+        }
+
         if (apps) {
             const dump_stream = b.addExecutable(.{
                 .name = "dump_stream",

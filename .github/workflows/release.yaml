@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
+          fetch-depth: 0
 
       - name: Tag and publish
         env:
@@ -43,10 +44,45 @@ jobs:
             exit 1
           fi
 
+          # Latest earlier tag of the same line; empty for the first release of a line.
+          previous=$(git tag -l "v${BRANCH%.x}.*-*" --sort=-v:refname | head -n 1)
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$tag" -m "nanoarrow-zig $version"
           git push origin "$tag"
+
+          nanoarrow_version="${version%-*}"
+          url="https://github.com/$GITHUB_REPOSITORY"
+          {
+            echo "Packages nanoarrow $nanoarrow_version (release tarball). Requires Zig 0.17.0+."
+            echo
+            echo "## Install"
+            echo
+            echo '```sh'
+            echo "zig fetch --save $url/archive/refs/tags/$tag.tar.gz"
+            echo '```'
+            echo
+            echo "Then use the dependency from \`build.zig\` as described in the [README]($url/blob/$tag/README.md)."
+          } > notes.md
+
+          if [ -n "$previous" ]; then
+            changes=$(git log --pretty='- %s' --invert-grep --grep='^Release ' "$previous"..HEAD)
+            {
+              echo
+              echo "## Changes since $previous"
+              echo
+              echo "${changes:-No changes besides the version bump.}"
+              echo
+              echo "Full changelog: $url/compare/$previous...$tag"
+            } >> notes.md
+          else
+            {
+              echo
+              echo "nanoarrow release notes: https://github.com/apache/arrow-nanoarrow/releases/tag/apache-arrow-nanoarrow-$nanoarrow_version"
+            } >> notes.md
+          fi
+
           gh release create "$tag" --verify-tag \
-            --title "nanoarrow-zig $version (nanoarrow ${version%-*})" \
-            --notes "Zig build of nanoarrow ${version%-*}. Zig 0.17.0+."
+            --title "nanoarrow-zig $version (nanoarrow $nanoarrow_version)" \
+            --notes-file notes.md

@@ -49,7 +49,7 @@ jobs:
         run: zig build -Dipc -Ddevice -Dapps
 
       - name: Smoke test
-        run: zig build test --summary all
+        run: zig build test -Dipc --summary all
 
   # Cross-compile every target from a single runner.
   cross:

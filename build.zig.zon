@@ -14,6 +14,10 @@
             .url = "git+https://github.com/allyourcodebase/lz4.git?ref=1.10.0-6#41f52ab227caf9d48cf88c89a4d2946caa12b102",
             .hash = "lz4-1.10.0-6-ewyzw-4NAAAWDpY4xpiqr4LQhZQAC0x_rGnW2iPh6jk2",
         },
+        .translate_c = .{
+            .url = "git+https://codeberg.org/ziglang/translate-c?ref=zig-0.17.x#cfac21f3199b2b02ce3fd7db652aa456421fe4ab",
+            .hash = "translate_c-2.0.2-Q_BUWvBNBwDnyehSiuAJmdFcMYHYGA-Jc3KiYdrV2Dqx",
+        },
     },
     .minimum_zig_version = "0.17.0",
     .paths = .{ "build.zig", "build.zig.zon", "README.md", "LICENSE", "examples" },

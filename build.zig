@@ -1,4 +1,5 @@
 const std = @import("std");
+const Translator = @import("translate_c").Translator;
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -11,6 +12,7 @@ pub fn build(b: *std.Build) void {
     const device_ext = b.option(bool, "device", "Build device libraries") orelse false;
     const apps = b.option(bool, "apps", "Build apps (dump_stream)") orelse false;
     const upstream = b.dependency("upstream", .{});
+    const translate_c = b.dependency("translate_c", .{});
 
     const nanoarrow_version: std.SemanticVersion = .{ .major = 0, .minor = 9, .patch = 0 };
     const nanoarrow_config_h = b.addConfigHeader(.{
@@ -59,26 +61,22 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(nanoarrow_lib);
 
-    const translate_c = b.addTranslateC(.{
-        .root_source_file = upstream.path("src/nanoarrow/nanoarrow.h"),
+    const nanoarrow_c: Translator = .init(translate_c, .{
+        .c_source_file = upstream.path("src/nanoarrow/nanoarrow.h"),
         .target = target,
         .optimize = optimize,
     });
-    translate_c.addIncludePath(upstream.path("src"));
-    translate_c.addConfigHeader(nanoarrow_config_h);
-    const nanoarrow_mod = b.addModule("nanoarrow", .{
-        .root_source_file = translate_c.getOutput(),
-        .target = target,
-        .optimize = optimize,
-    });
-    nanoarrow_mod.linkLibrary(nanoarrow_lib);
+    nanoarrow_c.addIncludePath(upstream.path("src"));
+    nanoarrow_c.addConfigHeader(nanoarrow_config_h);
+    nanoarrow_c.mod.linkLibrary(nanoarrow_lib);
+    exportModule(b, "nanoarrow", nanoarrow_c.mod);
 
     const smoke_test = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("examples/basic.zig"),
             .target = target,
             .optimize = optimize,
-            .imports = &.{.{ .name = "nanoarrow", .module = nanoarrow_mod }},
+            .imports = &.{.{ .name = "nanoarrow", .module = nanoarrow_c.mod }},
         }),
     });
     const test_step = b.step("test", "Run the Zig smoke test (examples/basic.zig)");
@@ -180,26 +178,22 @@ pub fn build(b: *std.Build) void {
 
         if (ipc_ext) {
             // nanoarrow_ipc.h includes nanoarrow.h, so this module also exposes the core API.
-            const translate_ipc = b.addTranslateC(.{
-                .root_source_file = upstream.path("src/nanoarrow/nanoarrow_ipc.h"),
+            const nanoarrow_ipc_c: Translator = .init(translate_c, .{
+                .c_source_file = upstream.path("src/nanoarrow/nanoarrow_ipc.h"),
                 .target = target,
                 .optimize = optimize,
             });
-            translate_ipc.addIncludePath(upstream.path("src"));
-            translate_ipc.addConfigHeader(nanoarrow_config_h);
-            const nanoarrow_ipc_mod = b.addModule("nanoarrow_ipc", .{
-                .root_source_file = translate_ipc.getOutput(),
-                .target = target,
-                .optimize = optimize,
-            });
-            nanoarrow_ipc_mod.linkLibrary(nanoarrow_ipc);
+            nanoarrow_ipc_c.addIncludePath(upstream.path("src"));
+            nanoarrow_ipc_c.addConfigHeader(nanoarrow_config_h);
+            nanoarrow_ipc_c.mod.linkLibrary(nanoarrow_ipc);
+            exportModule(b, "nanoarrow_ipc", nanoarrow_ipc_c.mod);
 
             const ipc_example = b.addTest(.{
                 .root_module = b.createModule(.{
                     .root_source_file = b.path("examples/ipc.zig"),
                     .target = target,
                     .optimize = optimize,
-                    .imports = &.{.{ .name = "nanoarrow_ipc", .module = nanoarrow_ipc_mod }},
+                    .imports = &.{.{ .name = "nanoarrow_ipc", .module = nanoarrow_ipc_c.mod }},
                 }),
             });
             test_step.dependOn(&b.addRunArtifact(ipc_example).step);
@@ -226,6 +220,12 @@ pub fn build(b: *std.Build) void {
             b.installArtifact(dump_stream);
         }
     }
+}
+
+// Translator.mod is created with createModule (private); this makes it visible to dependents
+// via `dep.module(name)`, which is what b.addModule does for modules it creates itself.
+fn exportModule(b: *std.Build, name: []const u8, mod: *std.Build.Module) void {
+    b.modules.put(b.graph.arena, b.graph.dupeString(name), mod) catch @panic("OOM");
 }
 
 const common_flags = .{ "-Wall", "-Wextra" };

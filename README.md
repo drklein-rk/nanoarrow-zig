@@ -46,11 +46,12 @@ Libraries and headers (including the generated `nanoarrow/nanoarrow_config.h`) a
 ## Use as a dependency
 
 ```sh
-zig fetch --save https://github.com/drklein-rk/nanoarrow-zig/archive/refs/tags/v0.9.0-1.tar.gz
+zig fetch --save https://github.com/drklein-rk/nanoarrow-zig/archive/refs/tags/v0.9.0-2.tar.gz
 ```
 
-Versions are `<nanoarrow version>-<revision>`: `v0.9.0-0` packages nanoarrow 0.9.0, and
-`v0.9.0-1` adds the `nanoarrow_ipc` Zig module on the same nanoarrow release. This branch (`0.9.x`) is
+Versions are `<nanoarrow version>-<revision>`: `v0.9.0-0` packages nanoarrow 0.9.0, and later
+revisions (`v0.9.0-1`, `v0.9.0-2`, ...) are build-only updates of the same nanoarrow release. This
+branch (`0.9.x`) is
 pinned to the nanoarrow 0.9.0 release tarball.
 
 ### From Zig

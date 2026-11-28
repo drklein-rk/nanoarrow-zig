@@ -3,8 +3,8 @@
     .version = "0.10.0-SNAPSHOT",
     .dependencies = .{
         .upstream = .{
-            .url = "https://github.com/apache/arrow-nanoarrow/archive/9fcabe5167ee6d4d50a1f417508f9be7baef4dc7.tar.gz",
-            .hash = "N-V-__8AACOJZAA6_94LuoUO_-v8-Z02uZvOt0iXf9rpvwLK",
+            .url = "https://github.com/apache/arrow-nanoarrow/archive/698b118c42451c367df02a4fa65e7787eb233711.tar.gz",
+            .hash = "N-V-__8AAM6YZABZyA4a_n2iTxTtjFuBnWdaHm3869qHJ_HB",
         },
         .zstd = .{
             .url = "git+https://github.com/allyourcodebase/zstd.git?ref=1.5.7-2#4ccb01e6fceae86fb9fe36c60b8a103cdc058155",
